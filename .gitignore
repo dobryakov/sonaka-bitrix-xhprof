@@ -1,0 +1,2 @@
+# XHProf: дампы прогонов (генерируются при ?xhprof=1)
+www/xhprof/runs/*.xhprof

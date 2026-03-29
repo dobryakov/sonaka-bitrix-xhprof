@@ -105,12 +105,20 @@
 ## PHP и образ `web`
 
 - Версия: **PHP 8.2**, **Apache** (Bookworm).
-- Расширения: `mysqli`, `pdo_mysql`, `gd`, `intl`, `zip`, `soap`, `opcache`, `bcmath`, `calendar`, `exif`, `sockets`, `imagick` и стандартные зависимости сборки.
+- Расширения: `mysqli`, `pdo_mysql`, `gd`, `intl`, `zip`, `soap`, `opcache`, `bcmath`, `calendar`, `exif`, `sockets`, `imagick`, **`xhprof`** и стандартные зависимости сборки.
 - Локаль в контейнере: **ru_RU.UTF-8**.
-- Дополнительные директивы PHP: `docker/php-bitrix.ini` (лимиты памяти, `max_input_vars`, загрузки, OPcache).
+- Дополнительные директивы PHP: `docker/php-bitrix.ini` (лимиты памяти, `max_input_vars`, загрузки, OPcache); для профилирования — `docker/php-xhprof.ini` (`auto_prepend_file`, каталог дампов).
 - Виртуальный хост Apache: `docker/000-bitrix.conf` — в каталоге сайта включён **`AllowOverride All`** для `.htaccess` и ЧПУ.
 
 При необходимости отредактируйте `docker/php-bitrix.ini` или конфиг Apache и пересоберите образ: `docker compose build web`.
+
+### Профилирование XHProf (локально)
+
+1. Пересоберите образ после добавления расширения: `docker compose build web`.
+2. Откройте нужную страницу с параметром **`?xhprof=1`** (можно добавить к уже существующему query string). В каталог `www/xhprof/runs/` сохранится файл прогона (`*.bitrix.xhprof`). Для ЧПУ Битрикса флаг обрабатывается и из `$_SERVER['QUERY_STRING']` в `prepend.php`, так как на раннем этапе `$_GET` может быть ещё пустым.
+3. Список прогонов и отчёты: **`http://localhost:8282/xhprof/xhprof_html/`** (порт замените на свой `WEB_PORT`). Дампы и веб-интерфейс лежат под `www/xhprof/`; сами дампы в `.gitignore`, в репозитории остаётся только пустой `runs/` с `.gitkeep`. Диаграмма вызовов (View Callgraph) требует **`dot`** из пакета Graphviz — он ставится в образ (`graphviz` в `Dockerfile`).
+
+Если файлы прогонов не появляются, выдайте веб-серверу запись в каталог дампов, например: `chmod 777 www/xhprof/runs` или `docker compose exec web bash -lc 'chown -R www-data:www-data /var/www/html/xhprof/runs'`.
 
 ## Структура репозитория
 
@@ -120,8 +128,11 @@
 ├── Dockerfile
 ├── docker/
 │   ├── 000-bitrix.conf    # виртуальный хост Apache
-│   └── php-bitrix.ini      # доп. настройки PHP
-└── www/                    # корень сайта (том для Битрикс)
+│   ├── php-bitrix.ini     # доп. настройки PHP
+│   └── php-xhprof.ini     # XHProf: prepend и каталог дампов
+└── www/
+    ├── …                   # корень Битрикс
+    └── xhprof/             # prepend, runs/, UI (xhprof_html, xhprof_lib)
 ```
 
 ## Полезные команды
