@@ -1,2 +1,6 @@
 # XHProf: дампы прогонов (генерируются при ?xhprof=1)
 www/xhprof/runs/*.xhprof
+
+# Кэш Bitrix (генерируется на стендах)
+www/bitrix/cache/
+www/bitrix/managed_cache/
